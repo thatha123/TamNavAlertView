@@ -8,6 +8,14 @@
 
 #import "TamNavAlertView.h"
 
+// 屏幕的宽和高
+#define TamScreenWith [UIScreen mainScreen].bounds.size.width
+#define TamScreenHeight [UIScreen mainScreen].bounds.size.height
+//是否为IphoneX
+#define TamIS_iPhoneX (TamScreenWith == 375 && TamScreenHeight == 812)
+//导航栏总高
+#define TamNavCountHeight (TamIS_iPhoneX ? (64+24) : 64)
+
 @interface TamNavAlertView()
 
 @property(nonatomic,strong)UILabel *alertLabel;
@@ -34,7 +42,7 @@
     TamNavAlertView *alertView = [[TamNavAlertView alloc]init];
     alertView.alertLabel.text = message;
     alertView.backgroundColor = [UIColor colorWithRed:61/255.0 green:182/255.0 blue:251/255.0 alpha:1.0];
-    alertView.frame = CGRectMake(0, -64, [UIScreen mainScreen].bounds.size.width, 64);
+    alertView.frame = CGRectMake(0, -TamNavCountHeight, [UIScreen mainScreen].bounds.size.width, TamNavCountHeight);
     [[UIApplication sharedApplication].keyWindow addSubview:alertView];
     
     [UIView animateWithDuration:0.5 animations:^{
@@ -56,7 +64,7 @@
             alertView.timer = nil;
             [UIView animateWithDuration:0.5 animations:^{
                 CGRect rect = alertView.frame;
-                rect.origin.y = -64;
+                rect.origin.y = -TamNavCountHeight;
                 alertView.frame = rect;
             }completion:^(BOOL finished) {
                 [alertView removeFromSuperview];
@@ -110,12 +118,9 @@
     self.alertLabel = alertLabel;
     alertLabel.textColor = [UIColor whiteColor];
     alertLabel.font = [UIFont systemFontOfSize:15];
+    alertLabel.frame = CGRectMake(10, TamIS_iPhoneX ? 24 : 20, TamScreenWith-10*2, TamIS_iPhoneX ? 64 : 44);
     [self addSubview:alertLabel];
-    alertLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    
-    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-10-[alertLabel]-10-|" options:0 metrics:nil views:@{@"alertLabel":alertLabel}]];
-    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[alertLabel]-5-|" options:0 metrics:nil views:@{@"alertLabel":alertLabel}]];
-    
+
     UISwipeGestureRecognizer *swipeGes = [[UISwipeGestureRecognizer alloc]initWithTarget:self action:@selector(swipeGesAction:)];
     swipeGes.direction = UISwipeGestureRecognizerDirectionUp;
     [self addGestureRecognizer:swipeGes];
