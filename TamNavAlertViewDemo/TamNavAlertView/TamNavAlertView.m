@@ -18,9 +18,9 @@
 
 @interface TamNavAlertView()
 
-@property(nonatomic,strong)UILabel *alertLabel;
+@property(nonatomic,weak)UILabel *alertLabel;
 @property(nonatomic,copy)TouchEventBlock touchEvent;
-@property(nonatomic,strong)NSTimer *timer;
+@property(nonatomic,strong)dispatch_source_t timer;
 @property(nonatomic,assign)int currentNum;
 
 @end
@@ -51,7 +51,7 @@
         alertView.frame = rect;
     }];
 
-    [alertView.timer fire];
+    [alertView startTimer];
     return alertView;
 }
 
@@ -60,8 +60,7 @@
     for (id sub in [UIApplication sharedApplication].keyWindow.subviews) {
         if ([sub isMemberOfClass:[TamNavAlertView class]]) {
             TamNavAlertView *alertView = (TamNavAlertView *)sub;
-            [alertView.timer invalidate];
-            alertView.timer = nil;
+            [alertView stopTimer];
             [UIView animateWithDuration:0.5 animations:^{
                 CGRect rect = alertView.frame;
                 rect.origin.y = -TamNavCountHeight;
@@ -84,21 +83,26 @@
     }
 }
 
--(NSTimer *)timer
+-(void)startTimer
 {
-    if (_timer == nil) {
-        _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(timerChange) userInfo:nil repeats:YES];
-        [[NSRunLoop currentRunLoop]addTimer:_timer forMode:NSRunLoopCommonModes];
-    }
-    return _timer;
+    dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+    dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC, 0 * NSEC_PER_SEC);
+    dispatch_source_set_event_handler(timer, ^{
+        self.currentNum++;
+        if (self.currentNum >= 4) {
+            [TamNavAlertView dissmiss];
+            self.currentNum = 0;
+        }
+    });
+    dispatch_resume(timer);
+    self.timer = timer;
 }
 
--(void)timerChange
+-(void)stopTimer
 {
-    self.currentNum++;
-    if (self.currentNum >= 4) {
-        [TamNavAlertView dissmiss];
-        self.currentNum = 0;
+    if (_timer) {
+        dispatch_source_cancel(_timer);
+        _timer = nil;
     }
 }
 
